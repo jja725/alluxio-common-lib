@@ -27,6 +27,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(murmurhash3)
 
+include(FetchContent)
+FetchContent_Declare(
+  etcd-cpp-apiv3
+  GIT_REPOSITORY https://github.com/etcd-cpp-apiv3/etcd-cpp-apiv3.git
+)
+FetchContent_MakeAvailable(etcd-cpp-apiv3)
+
+
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
