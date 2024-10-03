@@ -1,8 +1,10 @@
 {
   "dependencies": [
+    "boost-uuid",
     "etcd-cpp-apiv3",
+    "fmt",
     "jsoncpp",
     "murmurhash",
-    "fmt"
+    "gtest"
   ]
 }

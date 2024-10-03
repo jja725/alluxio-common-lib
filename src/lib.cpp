@@ -1,15 +1,14 @@
 #include <alluxio_lib/lib.hpp>
-#include <cstdlib> 
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-#include <chrono>
 #include <thread>
 #include <stdexcept>
-
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <json/json.h> // Include the JsonCpp header
-#include <etcd/Client.hpp>
-// Assuming you have a C++ etcd client library
+#include <etcd/Client.hpp> // Assuming you have a C++ etcd client library
 #include <MurmurHash3.h> // Assuming you have a MurmurHash3 implementation
 
 // WorkerNetAddress implementation
@@ -32,8 +31,9 @@ WorkerNetAddress::WorkerNetAddress(
       web_port(web_port),
       domain_socket_path(domain_socket_path),
       http_server_port(http_server_port) {}
-// WorkerIdentity implementation
-WorkerIdentity::WorkerIdentity(int version, const string& identifier)
+
+// WorkerIdentity struct implementation
+WorkerIdentity::WorkerIdentity(int version, const std::string& identifier)
     : version(version), identifier(identifier) {}
 
 bool WorkerIdentity::operator==(const WorkerIdentity& other) const {
@@ -63,7 +63,7 @@ WorkerEntity WorkerEntity::from_worker_info(const std::string& worker_info) {
         auto identity_info = root["Identity"];
         WorkerIdentity worker_identity(
             identity_info.get("version", DEFAULT_WORKER_IDENTIFIER_VERSION).asInt(),
-            identity_info.get("identifier", "").asString());
+            identity_info.get("identifier", boost::uuids::to_string(boost::uuids::random_generator()())).asString());
 
         auto net_address_info = root["WorkerNetAddress"];
         WorkerNetAddress worker_net_address(
@@ -85,9 +85,8 @@ WorkerEntity WorkerEntity::from_worker_info(const std::string& worker_info) {
 }
 
 WorkerEntity WorkerEntity::from_host_and_port(const std::string& worker_host, int worker_http_port) {
-
-
-    WorkerIdentity worker_identity(DEFAULT_WORKER_IDENTIFIER_VERSION, "");
+    std::string uuidstr = boost::uuids::to_string(boost::uuids::random_generator()());
+    WorkerIdentity worker_identity(DEFAULT_WORKER_IDENTIFIER_VERSION, uuidstr);
     WorkerNetAddress worker_net_address(
         worker_host,
         DEFAULT_CONTAINER_HOST,
@@ -263,7 +262,8 @@ void ConsistentHashProvider::_update_hash_ring(const std::map<WorkerIdentity, Wo
     std::lock_guard<std::mutex> lock(_lock);
     _hash_ring.clear();
 
-    for (const auto& [worker_identity, _] : worker_info_map) {
+    for (const auto& worker_info : worker_info_map) {
+        const WorkerIdentity worker_identity = worker_info.first;
         for (int i = 0; i < _config.hash_node_per_worker; ++i) {
             int64_t hash_key = _hash_worker_identity(worker_identity, i);
             _hash_ring[hash_key] = worker_identity;
@@ -311,8 +311,6 @@ std::map<WorkerIdentity, WorkerNetAddress> ConsistentHashProvider::_generate_wor
 
     return worker_info_map;
 }
-
-
 
 // Constructor
 AlluxioClient::AlluxioClient(const std::string& masterAddress, int port)

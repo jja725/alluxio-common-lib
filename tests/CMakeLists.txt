@@ -19,6 +19,8 @@ target_compile_features(testlib PRIVATE cxx_std_17)
 
 # Should be linked to the main library, as well as the Catch2 testing library
 target_link_libraries(testlib PRIVATE alluxio_lib Catch2::Catch2)
+find_package(jsoncpp CONFIG REQUIRED)
+target_link_libraries(testlib PRIVATE JsonCpp::JsonCpp)
 
 # If you register a test, then ctest and make test will run it.
 # You can also run examples and check the output, as well.

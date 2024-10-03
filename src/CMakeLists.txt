@@ -10,7 +10,8 @@ add_library(alluxio_lib lib.cpp ${HEADER_LIST})
 target_include_directories(alluxio_lib PUBLIC ../include)
 
 # This depends on (header only) boost
-target_link_libraries(alluxio_lib PRIVATE Boost::boost)
+find_package(Boost REQUIRED COMPONENTS uuid)
+target_link_libraries(alluxio_lib PRIVATE Boost::uuid)
 find_package(jsoncpp CONFIG REQUIRED)
 target_link_libraries(alluxio_lib PRIVATE JsonCpp::JsonCpp)
 find_package(etcd-cpp-api CONFIG REQUIRED)
