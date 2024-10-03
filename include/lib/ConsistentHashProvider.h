@@ -11,9 +11,10 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
-
 // Include necessary libraries for etcd and hashing
 #include "AlluxioClientConfig.h"
+
+using namespace std;
 
 // Constants
 const std::string DEFAULT_HOST = "localhost";
@@ -24,6 +25,7 @@ const int DEFAULT_SECURE_RPC_PORT = 0;
 const int DEFAULT_NETTY_DATA_PORT = 29997;
 const int DEFAULT_WEB_PORT = 30000;
 const std::string DEFAULT_DOMAIN_SOCKET_PATH = "";
+const int ALLUXIO_WORKER_HTTP_SERVER_PORT_DEFAULT_VALUE = 28080;
 const int DEFAULT_WORKER_IDENTIFIER_VERSION = 1;
 const std::string ETCD_PREFIX_FORMAT = "/alluxio/%s/worker/";
 

@@ -14,10 +14,8 @@ add_library(murmurhash3 STATIC ${murmurhash3_SOURCE_DIR}/src/MurmurHash3.cpp)
 
 # Include the directory for MurmurHash3 headers
 target_include_directories(lib PRIVATE ${murmurhash3_SOURCE_DIR}/src)
+target_link_libraries(lib PRIVATE murmurhash3)
 
-
-# This depends on (header only) boost
-#target_link_libraries(modern_cpp_lib PRIVATE Boost::boost)
 
 # All users of this library will need at least C++11
 target_compile_features(lib PUBLIC cxx_std_11)

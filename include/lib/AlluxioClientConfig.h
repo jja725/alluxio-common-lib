@@ -4,22 +4,18 @@
 #include <string>
 #include <stdexcept>
 #include <cstdint>
+using namespace std;
 
-// Constants
-const int ALLUXIO_WORKER_HTTP_SERVER_PORT_DEFAULT_VALUE = 30001;
-const std::string ALLUXIO_CLUSTER_NAME_DEFAULT_VALUE = "default";
-const std::string ALLUXIO_PAGE_SIZE_DEFAULT_VALUE = "4M";
-const int ALLUXIO_HASH_NODE_PER_WORKER_DEFAULT_VALUE = 3;
 struct AlluxioClientConfig {
     // Constructor
     AlluxioClientConfig(
         const std::string& etcd_hosts = "",
         const std::string& worker_hosts = "",
         int etcd_port = 2379,
-        int worker_http_port = ALLUXIO_WORKER_HTTP_SERVER_PORT_DEFAULT_VALUE,
+        int worker_http_port = 30001,
         int etcd_refresh_workers_interval = 120,
-        int hash_node_per_worker = ALLUXIO_HASH_NODE_PER_WORKER_DEFAULT_VALUE,
-        const std::string& cluster_name = ALLUXIO_CLUSTER_NAME_DEFAULT_VALUE,
+        int hash_node_per_worker = 5,
+        const std::string& cluster_name = "default",
         const std::string& etcd_username = "",
         const std::string& etcd_password = "")
         : etcd_hosts(etcd_hosts),

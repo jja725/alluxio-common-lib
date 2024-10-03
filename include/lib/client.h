@@ -1,8 +1,12 @@
-#ifndef ALLUXIO_CLIENT_H
-#define ALLUXIO_CLIENT_H
+#ifndef ALLUXIOCLIENT_H
+#define ALLUXIOCLIENT_H
 
 #include <string>
 #include <vector>
+using namespace std;
+
+
+
 
 // Structure to hold worker address information
 struct ReadResponse {

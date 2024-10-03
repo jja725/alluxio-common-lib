@@ -1,4 +1,4 @@
-#include "lib/ConsistentHashProvider.h"
+#include "../include/lib/ConsistentHashProvider.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -9,6 +9,7 @@
 #include <json/json.h> // For JSON parsing
 #include "etcd/Client.hpp" // Assuming you have a C++ etcd client library
 #include "MurmurHash3.h" // Assuming you have a MurmurHash3 implementation
+// Assuming you have a MurmurHash3 implementation
 // Helper function to convert UUID string to bytes
 std::vector<uint8_t> uuid_string_to_bytes(const std::string& uuid_str) {
     uuid_t uuid;
@@ -36,7 +37,6 @@ WorkerNetAddress::WorkerNetAddress(
       web_port(web_port),
       domain_socket_path(domain_socket_path),
       http_server_port(http_server_port) {}
-
 // WorkerIdentity implementation
 WorkerIdentity::WorkerIdentity(int version, const std::vector<uint8_t>& identifier)
     : version(version), identifier(identifier) {}
