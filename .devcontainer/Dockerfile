@@ -21,4 +21,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libgrpc++-dev \
     libprotobuf-dev \
     protobuf-compiler-grpc \
-    libcpprest-dev 
+    libcpprest-dev \
+    libjsoncpp-dev
+    

@@ -6,6 +6,7 @@ An native C++ library of Alluxio built using modern cmake approach as described
 
 * CMake 3.15 or better
 * A C++ compatible compiler
+* vcpkg (https://vcpkg.io/en/getting-started.html)
 
 ## Visual Studio Code Remote Containers Support
 

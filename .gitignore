@@ -44,3 +44,5 @@ todo.txt
 .cache/
 
 .DS_Store
+.idea/
+cmake-build-debug/

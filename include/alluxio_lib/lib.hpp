@@ -1,18 +1,12 @@
-#ifndef CONSISTENT_HASH_PROVIDER_H
-#define CONSISTENT_HASH_PROVIDER_H
+#pragma once
 
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
-#include <mutex>
 #include <thread>
-#include <memory>
 #include <atomic>
 #include <cstdint>
-#include <functional>
-// Include necessary libraries for etcd and hashing
-#include "AlluxioClientConfig.h"
 
 using namespace std;
 
@@ -31,6 +25,41 @@ const std::string ETCD_PREFIX_FORMAT = "/alluxio/%s/worker/";
 
 // Null namespace UUID (equivalent to Python's uuid.NAMESPACE_OID)
 const std::string NULL_NAMESPACE_UUID = "00000000-0000-0000-0000-000000000000";
+
+
+struct AlluxioClientConfig {
+    // Constructor
+    AlluxioClientConfig(
+        const std::string& etcd_hosts = "",
+        const std::string& worker_hosts = "",
+        const int etcd_port = 2379,
+        const int worker_http_port = 30001,
+        const int etcd_refresh_workers_interval = 120,
+        const int hash_node_per_worker = 5,
+        const std::string& cluster_name = "default",
+        const std::string& etcd_username = "",
+        const std::string& etcd_password = "")
+        : etcd_hosts(etcd_hosts),
+          worker_hosts(worker_hosts),
+          etcd_port(etcd_port),
+          worker_http_port(worker_http_port),
+          etcd_refresh_workers_interval(etcd_refresh_workers_interval),
+          hash_node_per_worker(hash_node_per_worker),
+          cluster_name(cluster_name),
+          etcd_username(etcd_username),
+          etcd_password(etcd_password) {}
+
+    // Public member variables
+    std::string etcd_hosts;
+    std::string worker_hosts;
+    int etcd_port;
+    int worker_http_port;
+    int etcd_refresh_workers_interval;
+    int hash_node_per_worker;
+    std::string cluster_name;
+    std::string etcd_username;
+    std::string etcd_password;
+};
 
 class WorkerNetAddress {
 public:
@@ -61,9 +90,9 @@ public:
 class WorkerIdentity {
 public:
     int version;
-    std::vector<uint8_t> identifier;
+    std::string identifier;
 
-    WorkerIdentity(int version, const std::vector<uint8_t>& identifier);
+    WorkerIdentity(int version, const string& identifier);
 
     bool operator==(const WorkerIdentity& other) const;
     bool operator<(const WorkerIdentity& other) const;
@@ -125,4 +154,44 @@ private:
     void _start_background_update_ring(int interval);
 };
 
-#endif // CONSISTENT_HASH_PROVIDER_H
+
+// Structure to hold worker address information
+struct ReadResponse {
+    size_t start_offset;             // The starting offset
+    size_t bytes;                    // Number of bytes
+    std::vector<std::string> IPs;    // List of IP addresses
+};
+
+class AlluxioClient {
+public:
+    // Constructor
+    AlluxioClient(const std::string& masterAddress, int port);
+
+    // Destructor
+    ~AlluxioClient();
+
+    /**
+     * @brief Retrieves worker addresses for a given file segment from Alluxio.
+     *
+     * @param filename The name of the file.
+     * @param offset The starting offset within the file.
+     * @param bytes The number of bytes to process.
+     * @return A list of WorkerAddress structures.
+     */
+    std::vector<ReadResponse> getWorkerAddress(
+        const std::string& filename,
+        size_t offset,
+        size_t bytes
+    );
+
+private:
+    std::string m_masterAddress;  // Alluxio master address
+    int m_port;                   // Port number
+
+    // Private helper functions
+    std::vector<ReadResponse> queryAlluxioForWorkerAddresses(
+        const std::string& filename,
+        size_t offset,
+        size_t bytes
+    );
+};

@@ -1,0 +1,8 @@
+{
+  "dependencies": [
+    "etcd-cpp-apiv3",
+    "jsoncpp",
+    "murmurhash",
+    "fmt"
+  ]
+}

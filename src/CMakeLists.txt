@@ -1,24 +1,27 @@
 
 # Note that headers are optional, and do not affect add_library, but they will not
 # show up in IDEs unless they are listed in add_library.
-file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${ModernCMakeExample_SOURCE_DIR}/include/lib/*.h")
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/alluxio_lib/*.hpp")
 
 # Make an automatic library - will be static or dynamic based on user setting
-add_library(lib client.cpp ${HEADER_LIST})
+add_library(alluxio_lib lib.cpp ${HEADER_LIST})
 
 # We need this directory, and users of our library will need it too
-target_include_directories(lib PUBLIC ../include)
+target_include_directories(alluxio_lib PUBLIC ../include)
 
-# Add the MurmurHash3 library
-add_library(murmurhash3 STATIC ${murmurhash3_SOURCE_DIR}/src/MurmurHash3.cpp)
-
-# Include the directory for MurmurHash3 headers
-target_include_directories(lib PRIVATE ${murmurhash3_SOURCE_DIR}/src)
-target_link_libraries(lib PRIVATE murmurhash3)
-
+# This depends on (header only) boost
+target_link_libraries(alluxio_lib PRIVATE Boost::boost)
+find_package(jsoncpp CONFIG REQUIRED)
+target_link_libraries(alluxio_lib PRIVATE JsonCpp::JsonCpp)
+find_package(etcd-cpp-api CONFIG REQUIRED)
+target_link_libraries(alluxio_lib PRIVATE etcd-cpp-api)
+find_package(murmurhash CONFIG REQUIRED)
+target_link_libraries(alluxio_lib PRIVATE murmurhash::murmurhash)
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(alluxio_lib PRIVATE fmt::fmt)
 
 # All users of this library will need at least C++11
-target_compile_features(lib PUBLIC cxx_std_11)
+target_compile_features(alluxio_lib PUBLIC cxx_std_11)
 
 # IDEs should put the headers in a nice place
 #source_group(TREE "${PROJECT_SOURCE_DIR}/include" PREFIX "Header Files" FILES ${HEADER_LIST})

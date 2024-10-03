@@ -1,5 +1,5 @@
-#include <lib/ConsistentHashProvider.h>
-#include <lib/client.h> // Include the header for ConsistentHashProvider
+#include <alluxio_lib/lib.hpp>
+
 #include <iostream>
 
 int main() {
