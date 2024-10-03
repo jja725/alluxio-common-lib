@@ -130,8 +130,6 @@ public:
     void shutdown_background_update_ring();
 
     ~ConsistentHashProvider();
-
-private:
     AlluxioClientConfig _config;
     int _max_attempts;
     mutex _lock;
