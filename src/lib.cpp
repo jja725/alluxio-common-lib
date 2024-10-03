@@ -266,7 +266,7 @@ void ConsistentHashProvider::_update_hash_ring(const std::map<WorkerIdentity, Wo
         const WorkerIdentity worker_identity = worker_info.first;
         for (int i = 0; i < _config.hash_node_per_worker; ++i) {
             int64_t hash_key = _hash_worker_identity(worker_identity, i);
-            _hash_ring[hash_key] = worker_identity;
+            _hash_ring.insert({hash_key, worker_identity});
         }
     }
 

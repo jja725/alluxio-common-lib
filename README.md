@@ -17,7 +17,10 @@ installing the dependencies above
 
 # to configure
 ``` bash
-cmake -S . -B build
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_TOOLCHAIN_FILE={SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake \
+      -G Ninja \
+      -B build
 ```
 
 # to build
@@ -27,7 +30,7 @@ cmake --build build
 
 # to test
 ``` bash
-cmake --build build -t test -- -e CTEST_OUTPUT_ON_FAILURE=1
+cmake --build build --target test
 ```
 
 # configure, build and run tests
