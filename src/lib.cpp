@@ -302,10 +302,21 @@ WorkerIdentity ConsistentHashProvider::_get_ceiling_value(int32_t hash_key) {
 }
 
 int32_t ConsistentHashProvider::_hash(const std::string& key, int index) {
-    int32_t hash[1];
-    std::string data = key + std::to_string(index);
-    MurmurHash3_x86_32(data.c_str(), data.size(), 0, hash);
-    return hash[0];
+    std::vector<uint8_t> buffer;
+
+    // Add key
+    buffer.insert(buffer.end(), key.begin(), key.end());
+
+    // Add index
+    uint32_t uint_index = static_cast<uint32_t>(index);
+    for (int i = 0; i < 4; ++i) {
+        buffer.push_back(static_cast<uint8_t>((uint_index >> (i * 8)) & 0xFF));
+    }
+
+    // Compute the hash
+    int32_t hash;
+    MurmurHash3_x86_32(buffer.data(), buffer.size(), 0, &hash);
+    return hash;
 }
 
 int32_t ConsistentHashProvider::_hash_worker_identity(const WorkerIdentity& worker, int node_index) {

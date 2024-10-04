@@ -20,12 +20,9 @@ const int DEFAULT_NETTY_DATA_PORT = 29997;
 const int DEFAULT_WEB_PORT = 30000;
 const string DEFAULT_DOMAIN_SOCKET_PATH = "";
 const int ALLUXIO_WORKER_HTTP_SERVER_PORT_DEFAULT_VALUE = 28080;
+const int DEFAULT_NUM_VIRTUAL_NODES = 5;
 const int DEFAULT_WORKER_IDENTIFIER_VERSION = 1;
 const string ETCD_PREFIX_FORMAT = "/alluxio/%s/worker/";
-
-// Null namespace UUID (equivalent to Python's uuid.NAMESPACE_OID)
-const string NULL_NAMESPACE_UUID = "00000000-0000-0000-0000-000000000000";
-
 
 
 struct AlluxioClientConfig {
@@ -36,7 +33,7 @@ struct AlluxioClientConfig {
         const int etcd_port = 2379,
         const int worker_http_port = 30001,
         const int etcd_refresh_workers_interval = 120,
-        const int hash_node_per_worker = 5,
+        const int hash_node_per_worker = DEFAULT_NUM_VIRTUAL_NODES,
         const string& cluster_name = "default",
         const string& etcd_username = "",
         const string& etcd_password = "")

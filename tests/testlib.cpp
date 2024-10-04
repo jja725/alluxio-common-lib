@@ -101,16 +101,6 @@ TEST_CASE_METHOD(ConsistentHashProviderFixture, "Test hash ring", "[ConsistentHa
     hash_provider._update_hash_ring(worker_info_map);
     std::string hash_ring_path = hash_res_dir + "/activeNodesMap.json";
     validate_hash_ring(hash_provider._hash_ring, hash_ring_path);
-}
-
-TEST_CASE_METHOD(ConsistentHashProviderFixture, "Test file workers", "[ConsistentHashProvider]") {
-    // Initialize hash_provider
-    ConsistentHashProvider hash_provider(config);
-
-    // Update hash ring with sample data
-    std::map<WorkerIdentity, WorkerNetAddress> worker_info_map;
-    // ... Add some sample worker info to the map ...
-    hash_provider._update_hash_ring(worker_info_map);
 
     // Test file workers
     std::string file_workers_path = hash_res_dir + "/fileUrlWorkers.json";
@@ -125,7 +115,7 @@ TEST_CASE_METHOD(ConsistentHashProviderFixture, "Test file workers", "[Consisten
         std::string ufs_url = member;
         Json::Value workers = file_workers_data[member];
 
-        std::vector<WorkerIdentity> current_worker_identities = hash_provider._get_multiple_worker_identities(ufs_url, 5);
+        std::vector<WorkerIdentity> current_worker_identities = hash_provider._get_multiple_worker_identities(ufs_url, DEFAULT_NUM_VIRTUAL_NODES);
 
         std::set<std::pair<int, std::vector<char>>> original_set;
         for (const auto& worker : workers) {
@@ -208,7 +198,7 @@ TEST_CASE("Test hash value of WorkerEntity", "[ConsistentHashProvider]") {
     unordered_set<int32_t> expected_hashes = {-2035703500, -2020503163, -1945615066, -1905409545, 1420996528};
 
     // Loop over node indices from 0 to 4
-    for (int node_index = 0; node_index < 5; ++node_index) {
+    for (int node_index = 0; node_index < DEFAULT_NUM_VIRTUAL_NODES; ++node_index) {
         // Calculate the hash value
         int32_t calculated_hash = hash_provider._hash_worker_identity(worker_identity, node_index);
 
