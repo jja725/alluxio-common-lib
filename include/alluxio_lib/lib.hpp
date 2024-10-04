@@ -88,10 +88,10 @@ public:
 
 struct WorkerIdentity {
     int version;
-    string identifier;
+    vector<char> identifier;
 
-    WorkerIdentity(int version, const string& identifier);
-
+    WorkerIdentity(int version, vector<char>& identifier);
+    static vector<char> get_bytes_from_hex_string(std::string identifier_hex);
     bool operator==(const WorkerIdentity& other) const;
     bool operator<(const WorkerIdentity& other) const;
 };
@@ -135,7 +135,7 @@ public:
     mutex _lock;
     bool _is_ring_initialized;
     map<WorkerIdentity, WorkerNetAddress> _worker_info_map;
-    map<int64_t, WorkerIdentity> _hash_ring;
+    map<int32_t, WorkerIdentity> _hash_ring;
 
     atomic<bool> _shutdown_background_update_ring_event;
     thread _background_thread;
@@ -143,9 +143,9 @@ public:
     void _fetch_workers_and_update_ring();
     void _update_hash_ring(const map<WorkerIdentity, WorkerNetAddress>& worker_info_map);
     vector<WorkerIdentity> _get_multiple_worker_identities(const string& key, int count);
-    int64_t _hash(const string& key, int index);
-    int64_t _hash_worker_identity(const WorkerIdentity& worker, int node_index);
-    WorkerIdentity _get_ceiling_value(int64_t hash_key);
+    int32_t _hash(const string& key, int index);
+    int32_t _hash_worker_identity(const WorkerIdentity& worker, int node_index);
+    WorkerIdentity _get_ceiling_value(int32_t hash_key);
     map<WorkerIdentity, WorkerNetAddress> _generate_worker_info_map(const string& worker_hosts, int worker_http_port);
     void _start_background_update_ring(int interval);
 };
