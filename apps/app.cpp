@@ -5,20 +5,10 @@
 int main() {
     try {
         // Create an Alluxio client configuration
-        AlluxioClientConfig config(
-            "etcd-host:2379",
-            "worker-host:30001",
-            2379,
-            30001,
-            120,
-            3,
-            "default",
-            "etcd-username",
-            "etcd-password"
-        );
+        AlluxioClientConfig config;
 
-        // Create an Alluxio client
-        AlluxioClient client("master-host", 29999);
+        // Create an Alluxio client using the config
+        AlluxioClient client(config);
 
         // Use the client to get worker addresses
         std::vector<ReadResponse> workerAddresses = client.getWorkerAddress("file.txt", 0, 1024);

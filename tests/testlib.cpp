@@ -206,3 +206,19 @@ TEST_CASE("Test hash value of WorkerEntity", "[ConsistentHashProvider]") {
         REQUIRE(expected_hashes.find(calculated_hash) != expected_hashes.end());
     }
 }
+
+// need to run etcd before running this test
+TEST_CASE("Test EtcdClient", "[EtcdClient]") {
+    AlluxioClientConfig config;
+    config.etcd_urls = "http://localhost:2379";
+    config.cluster_name = "alluxio";
+
+    EtcdClient etcd_client(config, config.etcd_urls);
+    auto worker_entities = etcd_client.get_worker_entities();
+    REQUIRE(worker_entities.size() > 0);
+    for (const auto& worker_entity : worker_entities) {
+        std::cout << worker_entity.worker_identity.version << std::endl;
+        std::cout << worker_entity.worker_net_address.host << std::endl;
+        std::cout << worker_entity.worker_net_address.http_server_port << std::endl;
+    }
+}

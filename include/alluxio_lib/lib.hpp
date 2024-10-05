@@ -7,6 +7,8 @@
 #include <thread>
 #include <atomic>
 #include <cstdint>
+#include <unordered_set>
+#include <etcd/Client.hpp>
 
 using namespace std;
 
@@ -22,24 +24,22 @@ const string DEFAULT_DOMAIN_SOCKET_PATH = "";
 const int ALLUXIO_WORKER_HTTP_SERVER_PORT_DEFAULT_VALUE = 28080;
 const int DEFAULT_NUM_VIRTUAL_NODES = 5;
 const int DEFAULT_WORKER_IDENTIFIER_VERSION = 1;
-const string ETCD_PREFIX_FORMAT = "/alluxio/%s/worker/";
+const string ETCD_PREFIX_FORMAT = "/ServiceDiscovery/{}";
 
 
 struct AlluxioClientConfig {
     // Constructor
     AlluxioClientConfig(
-        const string& etcd_hosts = "",
+        const string& etcd_hosts = "localhost:2379",
         const string& worker_hosts = "",
-        const int etcd_port = 2379,
         const int worker_http_port = 30001,
         const int etcd_refresh_workers_interval = 120,
         const int hash_node_per_worker = DEFAULT_NUM_VIRTUAL_NODES,
         const string& cluster_name = "default",
         const string& etcd_username = "",
         const string& etcd_password = "")
-        : etcd_hosts(etcd_hosts),
+        : etcd_urls(etcd_hosts),
           worker_hosts(worker_hosts),
-          etcd_port(etcd_port),
           worker_http_port(worker_http_port),
           etcd_refresh_workers_interval(etcd_refresh_workers_interval),
           hash_node_per_worker(hash_node_per_worker),
@@ -48,9 +48,8 @@ struct AlluxioClientConfig {
           etcd_password(etcd_password) {}
 
     // Public member variables
-    string etcd_hosts;
+    string etcd_urls;
     string worker_hosts;
-    int etcd_port;
     int worker_http_port;
     int etcd_refresh_workers_interval;
     int hash_node_per_worker;
@@ -102,20 +101,26 @@ public:
 
     static WorkerEntity from_worker_info(const string& worker_info);
     static WorkerEntity from_host_and_port(const string& worker_host, int worker_http_port);
+
+    bool operator==(const WorkerEntity& other) const {
+        return worker_identity == other.worker_identity &&
+               worker_net_address.host == other.worker_net_address.host &&
+               worker_net_address.http_server_port == other.worker_net_address.http_server_port;
+    }
 };
 
 class EtcdClient {
 public:
-    EtcdClient(const AlluxioClientConfig& config, const string& host, int port);
+    EtcdClient(const AlluxioClientConfig& config, const string& etcd_urls);
 
-    set<WorkerEntity> get_worker_entities();
+    vector<WorkerEntity> get_worker_entities() const;
 
 private:
     string _host;
-    int _port;
     string _etcd_username;
     string _etcd_password;
     string _prefix;
+    shared_ptr<etcd::Client> _etcd_client;
 };
 
 class ConsistentHashProvider {
@@ -158,7 +163,7 @@ struct ReadResponse {
 class AlluxioClient {
 public:
     // Constructor
-    AlluxioClient(const string& masterAddress, int port);
+    AlluxioClient(const AlluxioClientConfig& config);
 
     // Destructor
     ~AlluxioClient();
@@ -178,6 +183,7 @@ public:
     );
 
 private:
+    AlluxioClientConfig m_config;
     string m_masterAddress;  // Alluxio master address
     int m_port;                   // Port number
 

@@ -10,6 +10,7 @@
 #include <json/json.h> // Include the JsonCpp header
 #include <etcd/Client.hpp> // Assuming you have a C++ etcd client library
 #include <MurmurHash3.h> // Assuming you have a MurmurHash3 implementation
+#include <fmt/core.h>
 
 // WorkerNetAddress implementation
 
@@ -122,13 +123,10 @@ WorkerEntity WorkerEntity::from_host_and_port(const std::string& worker_host, in
 }
 
 // EtcdClient implementation
-EtcdClient::EtcdClient(const AlluxioClientConfig& config, const std::string& host, int port)
-    : _host(host), _port(port) {
+EtcdClient::EtcdClient(const AlluxioClientConfig& config, const std::string& etcd_urls)
+    : _host(etcd_urls) {
     if (_host.empty()) {
         throw std::invalid_argument("ETCD host must be provided.");
-    }
-    if (_port == 0) {
-        throw std::invalid_argument("ETCD port must be provided.");
     }
 
     _etcd_username = config.etcd_username;
@@ -137,15 +135,43 @@ EtcdClient::EtcdClient(const AlluxioClientConfig& config, const std::string& hos
     if ((_etcd_username.empty()) != (_etcd_password.empty())) {
         throw std::invalid_argument("Both ETCD username and password must be set or both unset.");
     }
-
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), ETCD_PREFIX_FORMAT.c_str(), config.cluster_name.c_str());
-    _prefix = buffer;
+    _prefix = fmt::format(ETCD_PREFIX_FORMAT, config.cluster_name);
+    if (_etcd_username.empty()) {
+        _etcd_client = std::make_shared<etcd::Client>(etcd_urls);
+    } else {
+        _etcd_client = std::make_shared<etcd::Client>(etcd_urls, _etcd_username, _etcd_password);
+    }
 }
 
-std::set<WorkerEntity> EtcdClient::get_worker_entities() {
-    // TODO: Implement the logic to fetch worker entities from ETCD
-    std::set<WorkerEntity> worker_entities;
+std::vector<WorkerEntity> EtcdClient::get_worker_entities() const {
+    std::vector<WorkerEntity> worker_entities;
+
+    try {
+        etcd::Response response = _etcd_client->ls(_prefix).get();
+        if (!response.is_ok()) {
+            throw std::runtime_error(fmt::format("Failed to get worker entities given prefix {} : {}", _prefix,
+                                                 response.error_message()));
+        }
+
+        for (const auto& kv : response.values()) {
+            try {
+                auto entity_str = kv.as_string();
+                auto worker_entity = WorkerEntity::from_worker_info(entity_str);
+                worker_entities.push_back(worker_entity);
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to process worker info: " << e.what() << std::endl;
+            }
+        }
+        if (worker_entities.empty()) {
+            throw std::runtime_error("Alluxio cluster may still be initializing. No worker registered");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "ETCD error: " << e.what() << std::endl;
+        throw std::runtime_error("ETCD error: " + std::string(e.what()));
+    } catch (...) {
+        std::cerr << "Unknown ETCD error occurred" << std::endl;
+    }
+
     return worker_entities;
 }
 
@@ -155,7 +181,7 @@ ConsistentHashProvider::ConsistentHashProvider(const AlluxioClientConfig& config
       _max_attempts(max_attempts),
       _is_ring_initialized(false),
       _shutdown_background_update_ring_event(false) {
-    if (!_config.etcd_hosts.empty()) {
+    if (!_config.etcd_urls.empty()) {
         _fetch_workers_and_update_ring();
         if (_config.etcd_refresh_workers_interval > 0) {
             _start_background_update_ring(_config.etcd_refresh_workers_interval);
@@ -180,7 +206,7 @@ void ConsistentHashProvider::_start_background_update_ring(int interval) {
 }
 
 void ConsistentHashProvider::shutdown_background_update_ring() {
-    if (!_config.etcd_hosts.empty() && _config.etcd_refresh_workers_interval > 0) {
+    if (!_config.etcd_urls.empty() && _config.etcd_refresh_workers_interval > 0) {
         _shutdown_background_update_ring_event.store(true);
         if (_background_thread.joinable()) {
             _background_thread.join();
@@ -225,33 +251,23 @@ std::vector<WorkerIdentity> ConsistentHashProvider::_get_multiple_worker_identit
 }
 
 void ConsistentHashProvider::_fetch_workers_and_update_ring() {
-    std::vector<std::string> etcd_hosts_list;
-    std::istringstream iss(_config.etcd_hosts);
-    std::string host;
-
-    while (std::getline(iss, host, ',')) {
-        etcd_hosts_list.push_back(host);
+    std::vector<WorkerEntity> worker_entities;
+    try {
+        EtcdClient etcd_client(_config, _config.etcd_urls);
+        worker_entities = etcd_client.get_worker_entities();
+    } catch (const std::exception& e) {
+        std::cerr << "Connection error to ETCD url " << _config.etcd_urls << ": " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown error occurred while connecting to ETCD host " << _config.etcd_urls << std::endl;
     }
 
-    std::random_shuffle(etcd_hosts_list.begin(), etcd_hosts_list.end());
-    std::set<WorkerEntity> worker_entities;
-
-    for (const auto& host : etcd_hosts_list) {
-        try {
-            EtcdClient etcd_client(_config, host, _config.etcd_port);
-            worker_entities = etcd_client.get_worker_entities();
-            break;
-        } catch (...) {
-            continue;
-        }
-    }
 
     if (worker_entities.empty()) {
         if (_is_ring_initialized) {
-            std::cerr << "Failed to retrieve worker info from ETCD servers: " << _config.etcd_hosts << std::endl;
+            std::cerr << "Failed to retrieve worker info from ETCD servers: " << _config.etcd_urls << std::endl;
             return;
         } else {
-            throw std::runtime_error("Failed to retrieve worker info from ETCD servers: " + _config.etcd_hosts);
+            throw std::runtime_error("Failed to retrieve worker info from ETCD servers: " + _config.etcd_urls);
         }
     }
 
@@ -358,8 +374,8 @@ std::map<WorkerIdentity, WorkerNetAddress> ConsistentHashProvider::_generate_wor
 }
 
 // Constructor
-AlluxioClient::AlluxioClient(const std::string& masterAddress, int port)
-    : m_masterAddress(masterAddress), m_port(port) {
+AlluxioClient::AlluxioClient(const AlluxioClientConfig& config)
+    : m_config(config) {
     // Initialization code if required
     // For example, establish connection to Alluxio master
 }
