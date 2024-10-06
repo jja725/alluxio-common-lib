@@ -154,10 +154,10 @@ public:
 
 
 // Structure to hold worker address information
-struct ReadResponse {
+struct ReadLocation {
     size_t start_offset;             // The starting offset
     size_t bytes;                    // Number of bytes
-    vector<string> IPs;    // List of IP addresses
+    vector<WorkerNetAddress> workers;    // List of IP addresses
 };
 
 class AlluxioClient {
@@ -176,21 +176,13 @@ public:
      * @param bytes The number of bytes to process.
      * @return A list of WorkerAddress structures.
      */
-    vector<ReadResponse> getWorkerAddress(
+    vector<ReadLocation> getWorkerAddress(
         const string& filename,
         size_t offset,
         size_t bytes
     );
 
 private:
-    AlluxioClientConfig m_config;
-    string m_masterAddress;  // Alluxio master address
-    int m_port;                   // Port number
-
-    // Private helper functions
-    vector<ReadResponse> queryAlluxioForWorkerAddresses(
-        const string& filename,
-        size_t offset,
-        size_t bytes
-    );
+    AlluxioClientConfig config;
+    ConsistentHashProvider hashProvider; // Added ConsistentHashProvider as a private field
 };

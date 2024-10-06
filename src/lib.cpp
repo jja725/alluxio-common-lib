@@ -1,5 +1,4 @@
 #include <alluxio_lib/lib.hpp>
-#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -375,19 +374,17 @@ std::map<WorkerIdentity, WorkerNetAddress> ConsistentHashProvider::_generate_wor
 
 // Constructor
 AlluxioClient::AlluxioClient(const AlluxioClientConfig& config)
-    : m_config(config) {
+    : config(config), hashProvider(config) {
     // Initialization code if required
-    // For example, establish connection to Alluxio master
 }
 
 // Destructor
 AlluxioClient::~AlluxioClient() {
     // Cleanup code if required
-    // For example, close connection to Alluxio master
 }
 
-std::vector<ReadResponse> AlluxioClient::getWorkerAddress(
-    const std::string& filename,
+vector<ReadLocation> AlluxioClient::getWorkerAddress(
+    const string& filename,
     size_t offset,
     size_t bytes
 ) {
@@ -395,37 +392,19 @@ std::vector<ReadResponse> AlluxioClient::getWorkerAddress(
     if (filename.empty()) {
         throw std::invalid_argument("Filename cannot be empty.");
     }
-
-    // Call the helper function to query Alluxio
-    return queryAlluxioForWorkerAddresses(filename, offset, bytes);
-}
-
-std::vector<ReadResponse> AlluxioClient::queryAlluxioForWorkerAddresses(
-    const std::string& filename,
-    size_t offset,
-    size_t bytes
-) {
-    // Vector to store the resulting worker addresses
-    std::vector<ReadResponse> workerAddresses;
-
-    // TODO: Implement the logic to interact with Alluxio to retrieve worker addresses.
-    // This may involve using Alluxio's client APIs or sending RPCs to the master.
-
-    // For demonstration purposes, we'll create some dummy data
-    ReadResponse address1;
-    address1.start_offset = offset;
-    address1.bytes = bytes / 2;  // Assume half the bytes are handled by this worker
-    address1.IPs = {"10.0.0.1", "10.0.0.2"};
-
-    ReadResponse address2;
-    address2.start_offset = offset + bytes / 2;
-    address2.bytes = bytes - address1.bytes;  // The remaining bytes
-    address2.IPs = {"10.0.0.3", "10.0.0.4"};
-
-    // Add the dummy addresses to the vector
-    workerAddresses.push_back(address1);
-    workerAddresses.push_back(address2);
-
-    // Return the list of worker addresses
-    return workerAddresses;
+    
+    // Use the filename as the key to get worker addresses
+    vector<WorkerNetAddress> workers = hashProvider.get_multiple_workers(filename, 1);
+    
+    // Create and return the ReadLocation
+    vector<ReadLocation> result;
+    if (!workers.empty()) {
+        ReadLocation location;
+        location.start_offset = offset;
+        location.bytes = bytes;
+        location.workers = workers;
+        result.push_back(location);
+    }
+    
+    return result;
 }

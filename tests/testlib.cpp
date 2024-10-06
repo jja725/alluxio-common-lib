@@ -222,3 +222,28 @@ TEST_CASE("Test EtcdClient", "[EtcdClient]") {
         std::cout << worker_entity.worker_net_address.http_server_port << std::endl;
     }
 }
+
+TEST_CASE("Test AlluxioClient", "[AlluxioClient]") {
+
+    // Create an Alluxio client configuration
+    AlluxioClientConfig config;
+    config.etcd_urls = "http://localhost:2379";
+    config.cluster_name = "alluxio";
+
+    // Create an Alluxio client using the config
+    AlluxioClient client(config);
+
+    // Use the client to get worker addresses
+    std::vector<ReadLocation> workerAddresses = client.getWorkerAddress("file.txt", 0, 1024);
+
+    // Print the worker addresses
+    for (const auto& address : workerAddresses) {
+        std::cout << "Start offset: " << address.start_offset << "\n";
+        std::cout << "Bytes: " << address.bytes << "\n";
+        std::cout << "Addresses: ";
+        for (const auto& ip : address.workers) {
+            std::cout << ip.host << " ";
+        }
+        std::cout << "\n";
+    }
+}
