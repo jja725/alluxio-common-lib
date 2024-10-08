@@ -210,6 +210,7 @@ void ConsistentHashProvider::shutdown_background_update_ring() {
         if (_background_thread.joinable()) {
             _background_thread.join();
         }
+        std::cout << "Background update ring thread joined" << std::endl;
     }
 }
 
@@ -220,6 +221,9 @@ ConsistentHashProvider::~ConsistentHashProvider() {
 std::vector<WorkerNetAddress> ConsistentHashProvider::get_multiple_workers(const std::string& key, int count) {
     std::lock_guard<std::mutex> lock(_lock);
     auto worker_identities = _get_multiple_worker_identities(key, count);
+    boost::uuids::uuid uuid;
+    std::copy(worker_identities[0].identifier.begin(), worker_identities[0].identifier.end(), uuid.begin());
+    std::cout << fmt::format("Worker identities: {}", boost::uuids::to_string(uuid)) << std::endl;
     std::vector<WorkerNetAddress> worker_addresses;
 
     for (const auto& worker_identity : worker_identities) {

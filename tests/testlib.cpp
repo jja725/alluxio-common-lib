@@ -70,7 +70,7 @@ protected:
         hash_res_dir = current_dir + "/fixtures";
 
         config.hash_node_per_worker = 5;
-        config.etcd_refresh_workers_interval = 100000000;
+        config.etcd_refresh_workers_interval = 5;
     }
 };
 
@@ -233,17 +233,27 @@ TEST_CASE("Test AlluxioClient", "[AlluxioClient]") {
     // Create an Alluxio client using the config
     AlluxioClient client(config);
 
-    // Use the client to get worker addresses
-    std::vector<ReadLocation> workerAddresses = client.getWorkerAddress("file.txt", 0, 1024);
+    // List of test files
+    std::vector<std::string> testFiles = {
+        "s3://file1.txt",
+        "s3://file2.txt",
+        "s3://file3.txt",
+        "s3://file4.txt",
+        "s3://file5.txt",
+        "s3://file6.txt",
+        "s3://file7.txt",
+        "s3://file8.txt",
+        "s3://file9.txt",
+        "s3://file10.txt"
+    };
 
-    // Print the worker addresses
-    for (const auto& address : workerAddresses) {
-        std::cout << "Start offset: " << address.start_offset << "\n";
-        std::cout << "Bytes: " << address.bytes << "\n";
-        std::cout << "Addresses: ";
-        for (const auto& ip : address.workers) {
-            std::cout << ip.host << " ";
-        }
+    // Iterate over the test files
+    for (const auto& file : testFiles) {
+        std::cout << "Testing file: " << file << "\n";
+
+        // Use the client to get worker addresses
+        std::vector<ReadLocation> workerAddresses = client.getWorkerAddress(file, 0, 1024);
+
         std::cout << "\n";
     }
 }
