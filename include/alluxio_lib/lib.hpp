@@ -150,6 +150,9 @@ public:
     WorkerIdentity _get_ceiling_value(int32_t hash_key);
     map<WorkerIdentity, WorkerNetAddress> _generate_worker_info_map(const string& worker_hosts, int worker_http_port);
     void _start_background_update_ring(int interval);
+
+private:
+    EtcdClient _etcd_client;
 };
 
 

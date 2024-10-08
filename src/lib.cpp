@@ -179,7 +179,7 @@ ConsistentHashProvider::ConsistentHashProvider(const AlluxioClientConfig& config
     : _config(config),
       _max_attempts(max_attempts),
       _is_ring_initialized(false),
-      _shutdown_background_update_ring_event(false) {
+      _shutdown_background_update_ring_event(false), _etcd_client(config, config.etcd_urls) {
     if (!_config.etcd_urls.empty()) {
         _fetch_workers_and_update_ring();
         if (_config.etcd_refresh_workers_interval > 0) {
@@ -252,8 +252,7 @@ std::vector<WorkerIdentity> ConsistentHashProvider::_get_multiple_worker_identit
 void ConsistentHashProvider::_fetch_workers_and_update_ring() {
     std::vector<WorkerEntity> worker_entities;
     try {
-        EtcdClient etcd_client(_config, _config.etcd_urls);
-        worker_entities = etcd_client.get_worker_entities();
+        worker_entities = _etcd_client.get_worker_entities();
     } catch (const std::exception& e) {
         std::cerr << "Connection error to ETCD url " << _config.etcd_urls << ": " << e.what() << std::endl;
     } catch (...) {
@@ -380,7 +379,7 @@ AlluxioClient::AlluxioClient(const AlluxioClientConfig& config)
 
 // Destructor
 AlluxioClient::~AlluxioClient() {
-    // Cleanup code if required
+    
 }
 
 vector<ReadLocation> AlluxioClient::getWorkerAddress(
