@@ -3,8 +3,8 @@
     "boost-uuid",
     "etcd-cpp-apiv3",
     "fmt",
+    "gtest",
     "jsoncpp",
-    "murmurhash",
-    "gtest"
+    "murmurhash"
   ]
 }

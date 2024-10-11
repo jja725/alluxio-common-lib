@@ -46,4 +46,4 @@ todo.txt
 .DS_Store
 .idea/
 cmake-build-debug/
-vspkg/
+vcpkg/
